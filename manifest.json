@@ -1,10 +1,10 @@
 {
   "short_name": "SplitFit",
   "name": "SplitFit - Panel de Progreso",
-  "icons": [
+"icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/8653/8653174.png",
-      "type": "image/png",
+      "src": "./icono.svg",
+      "type": "image/svg+xml",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
