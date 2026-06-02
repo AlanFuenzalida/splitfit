@@ -3,7 +3,7 @@ const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  'https://cdn-icons-png.flaticon.com/512/8653/8653174.png'
+  './icono.svg'
 ];
 
 // Instalar el Service Worker y guardar archivos en caché
