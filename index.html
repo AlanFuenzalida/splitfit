@@ -30,6 +30,19 @@
         }
     </style>
 </head>
+<!-- Vinculación del Manifest -->
+<link rel="manifest" href="./manifest.json">
+
+<!-- Registro del Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker registrado con éxito', reg))
+        .catch(err => console.error('Error al registrar el Service Worker', err));
+    });
+  }
+</script>    
 <body class="font-sans antialiased text-gray-200 pb-24">
 
     <header class="bg-[#111827] border-b border-gray-800 h-16 fixed top-0 left-0 right-0 z-50 px-6 flex items-center justify-between">
