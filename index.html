@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SplitFit Pro - Tu Bitácora Local</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #0b0f19; color: #f3f4f6; }
+        
+        .weight-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #22d3ee;
+            cursor: pointer;
+            border: 2px solid #0b0f19;
+            transition: transform 0.1s ease;
+        }
+        .weight-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased text-gray-200 pb-24">
+
+    <header class="bg-[#111827] border-b border-gray-800 h-16 fixed top-0 left-0 right-0 z-50 px-6 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-400">
+                <i data-lucide="dumbbell" class="w-5 h-5"></i>
+            </div>
+            <span class="text-lg font-bold tracking-wider text-white">SplitFit <span class="text-cyan-400">Pro</span></span>
+        </div>
+        <div class="text-xs text-gray-500 font-medium tracking-wider">Local v3.5</div>
+    </header>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#111827] border-t border-gray-800 h-16 z-50 w-full grid grid-cols-4 items-center px-2 shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.5)]">
+        <button onclick="switchTab('dash')" id="btn-dash" class="tab-btn flex flex-col items-center justify-center gap-1 h-full text-white transition-all">
+            <i data-lucide="layout-dashboard" class="w-5 h-5 text-purple-400"></i>
+            <span class="text-[11px] font-bold tracking-wide">Inicio</span>
+        </button>
+        <button onclick="switchTab('hoy')" id="btn-hoy" class="tab-btn flex flex-col items-center justify-center gap-1 h-full text-gray-400 transition-all">
+            <i data-lucide="calendar-range" class="w-5 h-5 text-emerald-400"></i>
+            <span class="text-[11px] font-bold tracking-wide">Hoy</span>
+        </button>
+        <button onclick="switchTab('importar')" id="btn-importar" class="tab-btn flex flex-col items-center justify-center gap-1 h-full text-gray-400 transition-all">
+            <i data-lucide="file-text" class="w-5 h-5 text-cyan-400"></i>
+            <span class="text-[11px] font-bold tracking-wide">Importar IA</span>
+        </button>
+        <button onclick="clearLocalStorage()" class="flex flex-col items-center justify-center gap-1 h-full text-rose-400/80 hover:text-rose-400 transition-all">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+            <span class="text-[11px] font-bold tracking-wide">Limpiar</span>
+        </button>
+    </nav>
+
+    <main class="min-h-screen p-4 sm:p-6 md:p-8 pt-20">
+        <div class="max-w-7xl mx-auto space-y-4">
+
+            <section id="tab-dash" class="tab-content space-y-4">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white">Panel de Progreso</h1>
+                    <p class="text-xs text-gray-400 mt-1">Métricas de control estricto basadas en tu semana real de entrenamiento.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between min-h-[120px]">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black text-gray-500 uppercase tracking-wider">Cumplimiento del Ciclo Activo</span>
+                            <span class="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg"><i data-lucide="activity" class="w-4 h-4"></i></span>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-white" id="dash-racha-text">0 / 4 Días Reales</div>
+                            <div class="flex items-center gap-1.5 mt-3" id="dash-racha-dots"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between min-h-[120px]">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-black text-gray-500 uppercase tracking-wider">Volumen Total Semanal Acumulado</span>
+                            <span class="p-1.5 bg-cyan-500/10 text-cyan-400 rounded-lg"><i data-lucide="layers" class="w-4 h-4"></i></span>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-white" id="dash-volumen-text">0 kg</div>
+                            <p class="text-[10px] text-gray-400 mt-1 font-medium">Suma de cargas efectivas logradas en el ciclo de fuerza de la semana</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between min-h-[110px]">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-wider truncate mr-1">Último Peso</span>
+                            <span class="p-1 bg-purple-500/10 text-purple-400 rounded-md"><i data-lucide="scale" class="w-3.5 h-3.5"></i></span>
+                        </div>
+                        <div>
+                            <div class="text-xl sm:text-2xl font-black text-white leading-tight" id="dash-peso-text">--.- kg</div>
+                            <p class="text-[9px] text-gray-400 mt-1 font-medium line-clamp-2 leading-snug" id="dash-peso-sub">Cargando...</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#111827] border border-gray-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between min-h-[110px]">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[9px] sm:text-[10px] font-black text-gray-500 uppercase tracking-wider truncate mr-1">Índice Rodilla</span>
+                            <span class="p-1 bg-amber-500/10 text-amber-400 rounded-md"><i data-lucide="heart-pulse" class="w-3.5 h-3.5"></i></span>
+                        </div>
+                        <div>
+                            <div class="text-xl sm:text-2xl font-black text-white leading-tight" id="dash-rodilla-text">--.-</div>
+                            <p class="text-[9px] text-gray-400 mt-1 font-medium line-clamp-2 leading-snug" id="dash-rodilla-sub">Cargando reportes AM...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-xs font-black text-white tracking-wide uppercase">Tendencia de Peso Corporal</h3>
+                            <p class="text-[10px] text-gray-500 font-medium mt-0.5">Evolución analítica basada en tus registros locales reales</p>
+                        </div>
+                        <div class="flex bg-[#0b0f19] p-1 rounded-xl border border-gray-800/60 text-[10px] font-bold self-start sm:self-auto">
+                            <button onclick="setWeightFilter(7)" id="filter-7" class="px-3 py-1 rounded-lg text-white bg-gray-800 transition-all">7D</button>
+                            <button onclick="setWeightFilter(30)" id="filter-30" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-all">1M</button>
+                            <button onclick="setWeightFilter(365)" id="filter-365" class="px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-all">1A</button>
+                        </div>
+                    </div>
+                    
+                    <div class="h-36 w-full flex items-end justify-center relative px-2 pt-2 bg-[#0b0f19]/30 rounded-xl border border-gray-900/60">
+                        <div id="dash-graph-notice" class="absolute inset-0 flex items-center justify-center p-4 text-center hidden">
+                            <p class="text-gray-500 text-[11px] font-black tracking-wider uppercase leading-relaxed max-w-md">
+                                Ingresa al menos 2 pesos en la pestaña 'Hoy' para proyectar la tendencia
+                            </p>
+                        </div>
+                        <svg class="w-full h-full overflow-visible" id="dash-weight-svg"></svg>
+                    </div>
+                    
+                    <div class="flex justify-between items-center text-[9px] font-black text-gray-500 uppercase tracking-wider mt-3 px-1" id="dash-weight-labels">
+                        <span>Inicio de Período</span>
+                        <span>Último Control</span>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-hoy" class="tab-content hidden space-y-4">
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+                    <div>
+                        <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white">Entrenamiento Diario</h1>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full xl:w-auto">
+                        <div class="flex items-center bg-[#111827] border border-gray-800 rounded-xl px-3 py-1.5 gap-3 shrink-0 justify-between relative min-w-[190px]">
+                            <div class="flex flex-col justify-center">
+                                <span id="month-year-display" class="text-xs font-black text-white tracking-wide capitalize">--- ----</span>
+                                <span id="week-subbadge" class="text-[9px] font-bold text-cyan-400 tracking-wider uppercase mt-0.5">Semana --</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-[#0b0f19] p-1 rounded-lg border border-gray-800/80">
+                                <input type="date" id="calendar-picker" onchange="handleDateChange(this.value)" class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer w-6 h-5 opacity-0 absolute right-4 z-10">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-cyan-400 cursor-pointer"></i>
+                            </div>
+                        </div>
+
+                        <div id="days-container" class="grid grid-cols-7 w-full xl:w-[460px] bg-[#111827] p-1.5 border border-gray-800 rounded-2xl gap-1.5 justify-items-stretch"></div>
+                    </div>
+                </div>
+
+                <div id="card-metrics" class="bg-[#111827] border border-gray-800 rounded-xl p-3 shadow-xl transition-all duration-300">
+                    <div class="flex items-center justify-between gap-4 w-full">
+                        <div class="flex items-center gap-3">
+                            <span class="p-1.5 bg-cyan-500/10 text-cyan-400 rounded-lg shrink-0">
+                                <i data-lucide="scale" class="w-4 h-4"></i>
+                            </span>
+                            <div class="min-w-0">
+                                <h1 class="text font-black text-white tracking-wide uppercase leading-tight">Control de Peso</h1>
+                                <p class="text-[10px] text-gray-500 font-medium truncate">Registro antropométrico diario</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <div class="flex items-center bg-[#0b0f19] border border-gray-800 rounded-lg px-2 py-1 max-w-[85px]">
+                                <input type="number" step="0.1" min="0.1" id="day-peso" placeholder="0.0" oninput="validateWeightInput()" class="w-full text-center bg-transparent text font-bold text-white focus:outline-none disabled:opacity-50">
+                                <span class="text-[10px] text-gray-500 font-bold ml-0.5">kg</span>
+                            </div>
+                            <button id="btn-save-metrics" onclick="saveDayMetrics()" disabled class="p-2 rounded-lg transition-all flex items-center justify-center h-[28px] w-[28px] bg-gray-800/40 text-gray-600 border border-transparent disabled:cursor-not-allowed">
+                                <i data-lucide="check" id="icon-save-metrics" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div id="card-am" class="bg-[#111827] border border-gray-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between transition-all duration-300">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><i data-lucide="sun" class="w-4 h-4"></i></span>
+                                    <div>
+                                        <h3 class="text font-black text-white tracking-wide uppercase">SESIÓN MAÑANA</h3>
+                                        <p id="am-routine-title" class="text-[11px] text-emerald-400 font-bold">Cardio en Ayunas</p>
+                                    </div>
+                                </div>
+                                <span id="badge-am" class="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded-full font-bold">Planeado</span>
+                            </div>
+
+                            <div id="am-description-box" class="mb-3">
+                                <div id="am-static-text" class="bg-gray-900/50 border border-gray-800 rounded-xl p-3.5 space-y-3">
+                                    <p class="text-xs font-bold tracking-wide text-gray-400 uppercase">Estructura Trotadora (40 min):</p>
+                                    <div class="text-xs text-gray-300 space-y-2.5">
+                                        <div class="flex items-start gap-2.5 border-l-2 border-emerald-500/40 pl-2 py-0.5">
+                                            <div class="flex flex-col">
+                                                <span class="text-emerald-400 font-extrabold tracking-wide text-[11px]">00:00 - 05:00 min</span>
+                                                <span class="text-gray-300 mt-0.5 font-medium text-[11px]">Calentamiento (Inclinación 0 | Velocidad 4.5-5.0 km/h)</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-2.5 border-l-2 border-amber-500/40 pl-2 py-0.5">
+                                            <div class="flex flex-col">
+                                                <span class="text-amber-400 font-extrabold tracking-wide text-[11px]">05:00 - 35:00 min</span>
+                                                <span class="text-gray-300 mt-0.5 font-medium text-[11px]">Quema Grasa (Inclinación 6-8 | Velocidad 5.3-5.8 km/h)</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-2.5 border-l-2 border-cyan-500/40 pl-2 py-0.5">
+                                            <div class="flex flex-col">
+                                                <span class="text-cyan-400 font-extrabold tracking-wide text-[11px]">35:00 - 40:00 min</span>
+                                                <span class="text-gray-300 mt-0.5 font-medium text-[11px]">Vuelta a la Calma (Inclinación 0 | Velocidad 4.5-3.5 km/h)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="am-rest-container" class="hidden"></div>
+                            </div>
+
+                            <div id="am-input-container" class="space-y-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Estado de la Rodilla en Impacto</label>
+                                    <div class="grid grid-cols-5 gap-1 bg-[#0b0f19] p-1 border border-gray-800 rounded-lg" id="rodilla-selector-container">
+                                        <button type="button" onclick="selectRodillaLevel(1)" id="btn-rodilla-1" class="rodilla-btn py-1.5 text-center rounded font-black text-xs transition-all text-gray-400 bg-transparent">1</button>
+                                        <button type="button" onclick="selectRodillaLevel(2)" id="btn-rodilla-2" class="rodilla-btn py-1.5 text-center rounded font-black text-xs transition-all text-gray-400 bg-transparent">2</button>
+                                        <button type="button" onclick="selectRodillaLevel(3)" id="btn-rodilla-3" class="rodilla-btn py-1.5 text-center rounded font-black text-xs transition-all text-gray-400 bg-transparent">3</button>
+                                        <button type="button" onclick="selectRodillaLevel(4)" id="btn-rodilla-4" class="rodilla-btn py-1.5 text-center rounded font-black text-xs transition-all text-gray-400 bg-transparent">4</button>
+                                        <button type="button" onclick="selectRodillaLevel(5)" id="btn-rodilla-5" class="rodilla-btn py-1.5 text-center rounded font-black text-xs transition-all text-gray-400 bg-transparent">5</button>
+                                    </div>
+                                    <div id="rodilla-wrapper-box" class="mt-2 text-[11px] font-bold bg-gray-900/30 border rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition-all duration-150">
+                                        <i data-lucide="info" id="rodilla-icon-display" class="w-3.5 h-3.5 shrink-0"></i>
+                                        <span id="rodilla-text-display">Selecciona un nivel del 1 al 5</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="btn-save-am" onclick="saveSessionAM()" class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-[#0b0f19] font-black text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/10 disabled:bg-gray-800 disabled:text-gray-500 disabled:shadow-none disabled:cursor-not-allowed">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> <span id="text-save-am">Marcar sesión AM completada</span>
+                        </button>
+                    </div>
+
+                    <div id="card-pm" class="bg-[#111827] border border-gray-800 rounded-2xl p-4 shadow-xl flex flex-col justify-between transition-all duration-300">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="p-2 bg-cyan-500/10 text-cyan-400 rounded-lg"><i data-lucide="moon" class="w-4 h-4"></i></span>
+                                    <div>
+                                        <h3 class="text font-black text-white tracking-wide uppercase">SESIÓN TARDE</h3>
+                                        <p id="pm-routine-title" class="text-[11px] text-cyan-400 font-bold">Cargando...</p>
+                                    </div>
+                                </div>
+                                <span id="badge-pm" class="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded-full font-bold">Planeado</span>
+                            </div>
+
+                            <div class="space-y-2">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <label id="pm-checklist-title" class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">Ejercicios de la Sesión</label>
+                                    <span id="pm-rest-notice" class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-lg font-bold flex items-center gap-1.5 self-start sm:self-auto">
+                                        <i data-lucide="timer" class="w-3.5 h-3.5"></i> Descanso: 60 - 90s
+                                    </span>
+                                </div>
+                                <div id="pm-exercises-container" class="space-y-2"></div>
+                            </div>
+                        </div>
+
+                        <button id="btn-save-pm" onclick="validateAndSavePM()" class="w-full mt-4 bg-cyan-500 hover:bg-cyan-600 text-[#0b0f19] font-black text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-500/10 disabled:bg-gray-800 disabled:text-gray-500 disabled:shadow-none disabled:cursor-not-allowed">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> <span id="text-save-pm">Marcar sesión PM completada</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-importar" class="tab-content hidden space-y-4">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">Importador Inteligente de IA</h1>
+                    <p class="text-gray-400 text-xs mt-0.5">Pega aquí el texto estructurado de tu rutina.</p>
+                </div>
+                <div class="bg-[#111827] border border-gray-800 rounded-2xl p-5 shadow-xl space-y-4">
+                    <textarea id="ai-text-input" rows="10" placeholder="Pega tu rutina aquí..." class="w-full bg-[#0b0f19] border border-gray-800 rounded-xl p-4 text-xs text-gray-300 focus:outline-none focus:border-cyan-500 font-mono"></textarea>
+                    <button onclick="processAIInput()" class="bg-cyan-500 hover:bg-cyan-600 text-[#0b0f19] font-bold py-2.5 px-5 rounded-xl text-xs flex items-center gap-2 transition-all">
+                        <i data-lucide="cpu" class="w-4 h-4"></i> Procesar y Estructurar Rutina
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        let currentDay = 'lun';
+        let referenceDate = new Date(); 
+        let selectedRodillaValue = 1;
+        let exerciseStates = {};
+        let activeWeightFilterDays = 7; 
+        
+        const mapDaysCode = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
+        const mapDaysShortNames = { lun: "Lun", mar: "Mar", mie: "Mié", jue: "Jue", vie: "Vie", sab: "Sáb", dom: "Dom" };
+
+        const rodillaGlosas = {
+            1: { txt: "1: Sin molestia (Perfecto)", color: "bg-emerald-500 text-[#0b0f19]", textColor: "text-emerald-400 border-emerald-500/20" },
+            2: { txt: "2: Molestia imperceptible / Mini pinchazo", color: "bg-teal-500 text-[#0b0f19]", textColor: "text-teal-400 border-teal-500/20" },
+            3: { txt: "3: Leve (Permite continuar)", color: "bg-amber-500 text-[#0b0f19]", textColor: "text-amber-400 border-amber-500/20" },
+            4: { txt: "4: Moderado (Obliga a bajar carga)", color: "bg-orange-500 text-white", textColor: "text-orange-400 border-orange-500/20" },
+            5: { txt: "5: Agudo (Detener máquina)", color: "bg-rose-500 text-white", textColor: "text-rose-400 border-rose-500/20" }
+        };
+
+        const routinesData = {
+            lun: { am: { hasCardio: true }, pm: { title: "Día 1: Espalda y Bíceps", ex: [{ name: "Remo con barra de pie (inclinado)", meta: "3 series x 12 repeticiones" }, { name: "Remo doble con mancuernas", meta: "3 series x 12 repeticiones" }, { name: "Dominadas en jaula (asistidas/negativas)", meta: "3 series x 6-8 repeticiones" }, { name: "Curl de bíceps con barra de pie", meta: "3 series x 12 repeticiones" }, { name: "Curl alternado con mancuernas (sentado)", meta: "3 series x 12 repeticiones" }] } },
+            mar: { am: { hasCardio: false }, pm: { title: "Día 2: Pierna y Pantorrilla", ex: [{ name: "Sentadilla Sumo con mancuerna pesada", meta: "4 series x 12 repeticiones" }, { name: "Peso Muerto Rumano con Mancuernas", meta: "4 series x 12 repeticiones" }, { name: "Puentes de Glúteo en el Suelo", meta: "3 series x 15 repeticiones" }, { name: "Elevación de talón para pantorrilla", meta: "4 series x 20 repeticiones" }] } },
+            mie: { am: { hasCardio: true }, pm: { title: "Descanso de Pesas", ex: [] } },
+            jue: { am: { hasCardio: false }, pm: { title: "Día 3: Pectoral y Tríceps", ex: [{ name: "Press de banca plano con barra", meta: "3 series x 12 repeticiones" }, { name: "Press plano con mancuernas", meta: "3 series x 12 repeticiones" }, { name: "Aperturas con mancuernas", meta: "3 series x 15 repeticiones" }, { name: "Flexiones de brazo (Lagartijas)", meta: "3 series x al fallo" }, { name: "Copa de tríceps a dos manos", meta: "3 series x 12 repeticiones" }] } },
+            vie: { am: { hasCardio: true }, pm: { title: "Día 4: Hombro y Cardio Express", ex: [{ name: "Press de hombro con barra sentado", meta: "3 series x 12 repeticiones" }, { name: "Vuelos laterales con mancuernas", meta: "4 series x 12 repeticiones" }, { name: "Remo vertical con barra", meta: "3 series x 12 repeticiones" }, { name: "Sombra de boxeo con mancuernas", meta: "3 series de 2 min" }] } },
+            sab: { am: { hasCardio: false }, pm: { title: "Descanso", ex: [] } },
+            dom: { am: { hasCardio: false }, pm: { title: "Descanso", ex: [] } }
+        };
+
+        function getFormattedDateString(baseDate, dayCode) {
+            const monday = getMondayOfDate(baseDate);
+            const targetIndex = mapDaysCode.indexOf(dayCode);
+            const computedDate = new Date(monday);
+            computedDate.setDate(monday.getDate() + targetIndex);
+            const yyyy = computedDate.getFullYear();
+            const mm = String(computedDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(computedDate.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function getFormattedCurrentDateString() { return getFormattedDateString(referenceDate, currentDay); }
+        function getStorageKey(suffix) { return `${getFormattedCurrentDateString()}_${suffix}`; }
+
+        function getYearAndWeek(date) {
+            const target = new Date(date.valueOf());
+            const dayNr = (date.getDay() + 6) % 7; 
+            target.setDate(target.getDate() - dayNr + 3); 
+            const firstThursday = target.valueOf();
+            target.setMonth(0, 1);
+            if (target.getDay() !== 4) { target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7)); }
+            const week = 1 + Math.ceil((firstThursday - target) / 604800000);
+            return { year: target.getFullYear(), week: week };
+        }
+
+        function getMondayOfDate(date) {
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); 
+            return new Date(d.setDate(diff));
+        }
+
+        function updateMonthYearDisplay() {
+            const timeInfo = getYearAndWeek(referenceDate);
+            const options = { month: 'long', year: 'numeric' };
+            const labelStr = referenceDate.toLocaleDateString('es-ES', options);
+            const cleanLabel = labelStr.replace(' de ', ' ').trim();
+            document.getElementById('month-year-display').innerText = cleanLabel;
+            document.getElementById('week-subbadge').innerText = `Semana ${timeInfo.week}`;
+        }
+
+        function renderDaySelector() {
+            const daysContainer = document.getElementById('days-container');
+            const monday = getMondayOfDate(referenceDate);
+            daysContainer.innerHTML = '';
+            
+            mapDaysCode.forEach((key, idx) => {
+                const currentButtonDate = new Date(monday);
+                currentButtonDate.setDate(monday.getDate() + idx);
+                const numDia = String(currentButtonDate.getDate()).padStart(2, '0');
+                const nombreCorto = mapDaysShortNames[key];
+                const isActive = key === currentDay;
+                
+                const btnClass = isActive 
+                    ? 'day-btn text-center py-2 text-white bg-emerald-500 font-black rounded-xl transition-all shadow-md shadow-emerald-500/10 w-full transform scale-100 flex flex-col items-center justify-center min-h-[52px]'
+                    : 'day-btn text-center py-2 text-gray-400 hover:text-white bg-gray-900/40 border border-gray-800/40 font-bold rounded-xl transition-all w-full flex flex-col items-center justify-center min-h-[52px]';
+                
+                daysContainer.innerHTML += `
+                    <button onclick="changeDay('${key}')" id="day-${key}" class="${btnClass}">
+                        <div class="text-sm tracking-wide leading-tight">${numDia}</div>
+                        <div class="text-[10px] opacity-60 font-medium mt-0.5">${nombreCorto}</div>
+                    </button>
+                `;
+            });
+            updateMonthYearDisplay();
+        }
+
+        function handleDateChange(dateValue) {
+            if (!dateValue) return;
+            const parts = dateValue.split('-');
+            const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            referenceDate = targetDate;
+            const jsDay = targetDate.getDay();
+            currentDay = mapDaysCode[jsDay === 0 ? 6 : jsDay - 1];
+            renderDaySelector();
+            renderActiveDay();
+            loadSavedData();
+        }
+
+        function syncCalendarPickerInput() {
+            const yyyy = referenceDate.getFullYear();
+            const mm = String(referenceDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(referenceDate.getDate()).padStart(2, '0');
+            document.getElementById('calendar-picker').value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        function changeDay(dayCode) {
+            const monday = getMondayOfDate(referenceDate);
+            const targetIndex = mapDaysCode.indexOf(dayCode);
+            monday.setDate(monday.getDate() + targetIndex);
+            referenceDate = monday;
+            currentDay = dayCode;
+            syncCalendarPickerInput();
+            renderDaySelector();
+            renderActiveDay();
+            loadSavedData();
+        }
+
+        function selectRodillaLevel(val) {
+            if (localStorage.getItem(getStorageKey('am_status')) === 'Completado') return;
+            selectedRodillaValue = val;
+            document.querySelectorAll('.rodilla-btn').forEach(btn => {
+                btn.className = "rodilla-btn py-1.5 text-center rounded font-black text-xs transition-all text-gray-400 bg-transparent";
+            });
+            const config = rodillaGlosas[val];
+            const activeBtn = document.getElementById(`btn-rodilla-${val}`);
+            if (activeBtn) activeBtn.className = `rodilla-btn py-1.5 text-center rounded font-black text-xs transition-all ${config.color}`;
+            const wrapper = document.getElementById('rodilla-wrapper-box');
+            const txtDisplay = document.getElementById('rodilla-text-display');
+            const iconDisplay = document.getElementById('rodilla-icon-display');
+            if(wrapper && txtDisplay && iconDisplay) {
+                wrapper.className = "mt-2 text-[11px] font-bold bg-gray-900/30 border rounded-lg px-2.5 py-1.5 flex items-center gap-2 transition-all duration-150 " + config.textColor;
+                iconDisplay.className = "w-3.5 h-3.5 shrink-0 " + (val <= 2 ? "text-emerald-400" : val === 3 ? "text-amber-400" : "text-rose-400");
+                txtDisplay.innerText = config.txt;
+            }
+        }
+
+        function toggleExerciseStatus(idx) {
+            if (localStorage.getItem(getStorageKey('pm_status')) === 'Completado') return;
+            exerciseStates[idx] = !exerciseStates[idx];
+            const indicator = document.getElementById(`pm-ex${idx}-indicator`);
+            const titleElement = document.getElementById(`pm-ex${idx}-title`);
+            const wrapperCard = document.getElementById(`pm-ex${idx}-card`);
+            if(exerciseStates[idx]) {
+                indicator.className = "w-5 h-5 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-400 transition-all duration-200 shrink-0";
+                indicator.innerHTML = '<i data-lucide="check" class="w-3 h-3 stroke-[4]"></i>';
+                titleElement.classList.add('line-through', 'text-gray-500');
+                titleElement.classList.remove('text-white');
+                wrapperCard.classList.add('border-emerald-500/10', 'bg-emerald-950/5');
+            } else {
+                indicator.className = "w-5 h-5 rounded-full border-2 border-gray-700 hover:border-cyan-400 flex items-center justify-center text-transparent transition-all duration-200 shrink-0";
+                indicator.innerHTML = '';
+                titleElement.classList.remove('line-through', 'text-gray-500');
+                titleElement.classList.add('text-white');
+                wrapperCard.classList.remove('border-emerald-500/10', 'bg-emerald-950/5');
+            }
+            lucide.createIcons();
+        }
+
+        function validateWeightInput() {
+            if (localStorage.getItem(getStorageKey('metrics_status')) === 'Completado') return;
+            const input = document.getElementById('day-peso');
+            const btn = document.getElementById('btn-save-metrics');
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val > 0) {
+                btn.disabled = false;
+                btn.className = "p-2 rounded-lg transition-all flex items-center justify-center h-[28px] w-[28px] bg-cyan-500 text-[#0b0f19] font-black shadow-lg shadow-cyan-500/20 scale-105 border border-cyan-400";
+            } else {
+                btn.disabled = true;
+                btn.className = "p-2 rounded-lg transition-all flex items-center justify-center h-[28px] w-[28px] bg-gray-800/40 text-gray-600 border border-transparent disabled:cursor-not-allowed scale-100";
+            }
+        }
+
+        function adjustSlider(index, change) {
+            const slider = document.getElementById(`pm-ex${index}-slider`);
+            if (slider && !slider.disabled) {
+                let newVal = parseFloat(slider.value) + change;
+                if (newVal < 3.0) newVal = 3.0;
+                if (newVal > 30.0) newVal = 30.0;
+                slider.value = newVal.toFixed(1);
+                updateSliderLabel(index, slider.value);
+            }
+        }
+
+        function updateSliderLabel(index, val) {
+            const display = document.getElementById(`pm-ex${index}-weight-display`);
+            if (display) display.innerText = `${parseFloat(val).toFixed(1)} kg`;
+        }
+
+        function renderActiveDay() {
+            const dateStr = getFormattedCurrentDateString();
+            const isJune2026 = dateStr.startsWith("2026-06");
+            
+            let dayData = { am: { hasCardio: false }, pm: { title: "Sin rutina asignada", ex: [] } };
+            if (isJune2026) { dayData = routinesData[currentDay]; }
+
+            const staticText = document.getElementById('am-static-text');
+            const restContainer = document.getElementById('am-rest-container');
+            const amInputContainer = document.getElementById('am-input-container');
+            const btnAM = document.getElementById('btn-save-am');
+
+            if(!dayData.am.hasCardio) {
+                staticText.classList.add('hidden');
+                amInputContainer.classList.add('hidden');
+                if(btnAM) btnAM.style.display = 'none';
+                restContainer.classList.remove('hidden');
+                
+                let fraseDescansoAm = "Regeneración articular y recarga de glucógeno para optimizar el rendimiento.";
+                if(currentDay === 'sab' || currentDay === 'dom') { fraseDescansoAm = "Fin de semana. Optimización del descanso para asimilar las cargas semanales."; }
+                if(!isJune2026) { fraseDescansoAm = "Sin registros de actividad aeróbica matutina para este periodo."; }
+
+                restContainer.innerHTML = `
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500">ESTADO DE LA MAÑANA</label>
+                        <div class="p-5 bg-gray-900/30 border border-dashed border-gray-800 rounded-xl text-center">
+                            <div class="inline-flex p-2 bg-emerald-500/10 text-emerald-400 rounded-full mb-1.5">
+                                <i data-lucide="battery-charging" class="w-5 h-5"></i>
+                            </div>
+                            <p class="text-xs text-gray-400 max-w-sm mx-auto font-medium">${fraseDescansoAm}</p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('am-routine-title').innerText = "Descanso";
+            } else {
+                staticText.classList.remove('hidden');
+                restContainer.classList.add('hidden');
+                amInputContainer.classList.remove('hidden');
+                if(btnAM) btnAM.style.display = 'flex';
+                document.getElementById('am-routine-title').innerText = "Cardio en Ayunas";
+                selectRodillaLevel(1);
+            }
+
+            const containerPM = document.getElementById('pm-exercises-container');
+            const noticePM = document.getElementById('pm-rest-notice');
+            document.getElementById('pm-routine-title').innerText = dayData.pm.title;
+            const btnPM = document.getElementById('btn-save-pm');
+            
+            if(dayData.pm.ex.length === 0) {
+                document.getElementById('pm-checklist-title').innerText = "ESTADO DE LA TARDE";
+                if(noticePM) noticePM.classList.add('hidden');
+                
+                let fraseDescansoPm = "Músculos y articulaciones en recuperación activa.";
+                if(currentDay === 'mie') fraseDescansoPm = "Pausa estratégica de fuerza. Enfoque en flexibilidad y movilidad del tren inferior.";
+                if(currentDay === 'dom') fraseDescansoPm = "Cierre de ciclo semanal. Preparación mental para la siguiente rotación de cargas.";
+                if(!isJune2026) { fraseDescansoPm = "No hay bloques de fuerza agendados. Usa el importador IA para añadir dinámicas."; }
+
+                containerPM.innerHTML = `
+                    <div class="p-5 bg-gray-900/30 border border-dashed border-gray-800 rounded-xl text-center">
+                        <div class="inline-flex p-2 bg-cyan-500/10 text-cyan-400 rounded-full mb-1.5">
+                            <i data-lucide="coffee" class="w-5 h-5"></i>
+                        </div>
+                        <p class="text-xs text-gray-400 max-w-sm mx-auto font-medium">${fraseDescansoPm}</p>
+                    </div>
+                `;
+                if(btnPM) btnPM.style.display = 'none';
+                document.getElementById('pm-routine-title').innerText = "Descanso";
+            } else {
+                document.getElementById('pm-checklist-title').innerText = "Ejercicios de la Sesión";
+                if(noticePM) noticePM.classList.remove('hidden');
+                if(btnPM) btnPM.style.display = 'flex';
+                containerPM.innerHTML = '';
+                
+                dayData.pm.ex.forEach((exercise, idx) => {
+                    const i = idx + 1;
+                    exerciseStates[i] = false;
+                    containerPM.innerHTML += `
+                        <div id="pm-ex${i}-card" class="p-3.5 bg-gray-950/40 border border-gray-800/60 rounded-xl space-y-3 transition-all duration-200">
+                            <div class="flex items-start gap-3">
+                                <button type="button" id="pm-ex${i}-indicator" onclick="toggleExerciseStatus(${i})" class="w-5 h-5 rounded-full border-2 border-gray-700 hover:border-cyan-400 flex items-center justify-center text-transparent transition-all duration-200 shrink-0 mt-0.5 focus:outline-none"></button>
+                                <div class="flex-1 min-w-0" onclick="toggleExerciseStatus(${i})">
+                                    <span id="pm-ex${i}-title" class="text-base font-black text-white block leading-tight tracking-wide cursor-pointer transition-colors">${exercise.name}</span>
+                                    <span class="inline-block text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/10 font-bold px-2 py-0.5 rounded mt-1.5">${exercise.meta}</span>
+                                </div>
+                            </div>
+                            <div class="bg-[#0b0f19]/30 border border-gray-900 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
+                                <span class="text-[10px] font-bold uppercase text-gray-500 tracking-wider">Carga</span>
+                                <div class="flex items-center gap-2 flex-1 justify-end max-w-[200px]">
+                                    <button type="button" onclick="adjustSlider(${i}, -0.5)" class="pm-adjust-btn w-6 h-6 flex items-center justify-center bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded-md text-gray-400 font-bold text-xs transition-all select-none">-</button>
+                                    <input type="range" id="pm-ex${i}-slider" min="3.0" max="30.0" step="0.5" value="3.0" oninput="updateSliderLabel(${i}, this.value)" class="weight-slider w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer focus:outline-none">
+                                    <button type="button" onclick="adjustSlider(${i}, 0.5)" class="pm-adjust-btn w-6 h-6 flex items-center justify-center bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded-md text-gray-400 font-bold text-xs transition-all select-none">+</button>
+                                    <span id="pm-ex${i}-weight-display" class="text-sm font-black text-cyan-400/90 w-14 whitespace-nowrap text-right shrink-0">3.0 kg</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            lucide.createIcons();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('text-white'); el.classList.add('text-gray-400'); });
+            const currentBtn = document.getElementById(`btn-${tabName}`);
+            if(currentBtn) { currentBtn.classList.add('text-white'); currentBtn.classList.remove('text-gray-400'); }
+            if (tabName === 'dash') { calculateStrictDashboardMetrics(); }
+        }
+
+        function saveDayMetrics() {
+            const input = document.getElementById('day-peso');
+            const val = parseFloat(input.value);
+            if (isNaN(val) || val <= 0) return;
+            localStorage.setItem(getStorageKey('metrics_peso'), val);
+            localStorage.setItem(getStorageKey('metrics_status'), 'Completado');
+            updateBadgesAndInputs();
+        }
+
+        function saveSessionAM() {
+            localStorage.setItem(getStorageKey('am_rodilla'), selectedRodillaValue);
+            localStorage.setItem(getStorageKey('am_status'), 'Completado');
+            updateBadgesAndInputs();
+        }
+
+        function validateAndSavePM() {
+            const dateStr = getFormattedCurrentDateString();
+            if (!dateStr.startsWith("2026-06")) { saveSessionPM(); return; }
+            const totalEx = routinesData[currentDay].pm.ex.length;
+            let todoMarcado = true;
+            for(let i=1; i<=totalEx; i++) { if(!exerciseStates[i]) todoMarcado = false; }
+            if (!todoMarcado) { if (!confirm('Faltan marcar ejercicios. ¿Cerrar sesión de todas formas?')) return; }
+            saveSessionPM();
+        }
+
+        function saveSessionPM() {
+            const dateStr = getFormattedCurrentDateString();
+            const totalEx = dateStr.startsWith("2026-06") ? routinesData[currentDay].pm.ex.length : 0;
+            for (let i = 1; i <= totalEx; i++) {
+                localStorage.setItem(getStorageKey(`pm_ex${i}_check`), exerciseStates[i]);
+                localStorage.setItem(getStorageKey(`pm_ex${i}_peso`), document.getElementById(`pm-ex${i}-slider`).value);
+            }
+            localStorage.setItem(getStorageKey('pm_status'), 'Completado');
+            updateBadgesAndInputs();
+        }
+
+        function loadSavedData() {
+            const pesoInput = document.getElementById('day-peso');
+            if(pesoInput) { pesoInput.value = localStorage.getItem(getStorageKey('metrics_peso')) || ''; validateWeightInput(); }
+            const savedRodilla = localStorage.getItem(getStorageKey('am_rodilla'));
+            if(savedRodilla) { selectRodillaLevel(parseInt(savedRodilla)); } else { selectRodillaLevel(1); }
+            
+            const dateStr = getFormattedCurrentDateString();
+            const totalEx = dateStr.startsWith("2026-06") ? routinesData[currentDay].pm.ex.length : 0;
+            for (let i = 1; i <= totalEx; i++) {
+                if(document.getElementById(`pm-ex${i}-slider`)) {
+                    const isChecked = localStorage.getItem(getStorageKey(`pm_ex${i}_check`)) === 'true';
+                    if(isChecked) { exerciseStates[i] = false; toggleExerciseStatus(i); }
+                    const savedWeight = localStorage.getItem(getStorageKey(`pm_ex${i}_peso`)) || '3.0';
+                    document.getElementById(`pm-ex${i}-slider`).value = savedWeight;
+                    updateSliderLabel(i, savedWeight);
+                }
+            }
+            updateBadgesAndInputs();
+        }
+
+        function updateBadgesAndInputs() {
+            const dateStr = getFormattedCurrentDateString();
+            const isJune2026 = dateStr.startsWith("2026-06");
+            const dayData = isJune2026 ? routinesData[currentDay] : { am: { hasCardio: false }, pm: { ex: [] } };
+
+            const btnMet = document.getElementById('btn-save-metrics');
+            const iconMet = document.getElementById('icon-save-metrics');
+            const cardMet = document.getElementById('card-metrics');
+            const inputPeso = document.getElementById('day-peso');
+
+            if (localStorage.getItem(getStorageKey('metrics_status')) === 'Completado') {
+                cardMet.classList.add('opacity-60'); 
+                if(btnMet) { 
+                    btnMet.disabled = true; 
+                    btnMet.className = "p-2 rounded-lg transition-all flex items-center justify-center h-[28px] w-[28px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 scale-100"; 
+                }
+                if(iconMet) iconMet.setAttribute('data-lucide', 'check-circle-2');
+                if(inputPeso) inputPeso.disabled = true;
+            } else {
+                cardMet.classList.remove('opacity-60'); 
+                if(inputPeso) inputPeso.disabled = false; 
+                validateWeightInput(); 
+            }
+
+            const btnAM = document.getElementById('btn-save-am');
+            const txtAM = document.getElementById('text-save-am');
+            const cardAM = document.getElementById('card-am');
+            const rodillaButtons = document.querySelectorAll('.rodilla-btn');
+
+            if (!dayData.am.hasCardio) {
+                const badgeAm = document.getElementById('badge-am'); if (badgeAm) { badgeAm.className = 'text-xs bg-gray-800/60 text-gray-500 px-3 py-1 rounded-full font-bold'; badgeAm.innerText = 'Descanso'; }
+                cardAM.classList.remove('opacity-60');
+            } else if (localStorage.getItem(getStorageKey('am_status')) === 'Completado') {
+                const badgeAm = document.getElementById('badge-am'); if (badgeAm) { badgeAm.className = 'text-xs bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full font-bold'; badgeAm.innerText = 'Completado'; }
+                cardAM.classList.add('opacity-60'); if(btnAM) btnAM.disabled = true; if(txtAM) txtAM.innerText = "AM Guardado"; rodillaButtons.forEach(b => b.disabled = true);
+            } else {
+                const badgeAm = document.getElementById('badge-am'); if (badgeAm) { badgeAm.className = 'text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded-full font-bold'; badgeAm.innerText = 'Planeado'; }
+                cardAM.classList.remove('opacity-60'); if(btnAM) btnAM.disabled = false; if(txtAM) txtAM.innerText = "Marcar sesión AM completada"; rodillaButtons.forEach(b => b.disabled = false);
+            }
+
+            const btnPM = document.getElementById('btn-save-pm');
+            const txtPM = document.getElementById('text-save-pm');
+            const cardPM = document.getElementById('card-pm');
+            const inputsPM = document.querySelectorAll('.pm-adjust-btn, .weight-slider, #pm-exercises-container button');
+
+            if (dayData.pm.ex.length === 0) {
+                const badgePm = document.getElementById('badge-pm'); if (badgePm) { badgePm.className = 'text-xs bg-gray-800/60 text-gray-500 px-3 py-1 rounded-full font-bold'; badgePm.innerText = 'Descanso'; }
+                cardPM.classList.remove('opacity-60');
+            } else if (localStorage.getItem(getStorageKey('pm_status')) === 'Completado') {
+                const badgePm = document.getElementById('badge-pm'); if (badgePm) { badgePm.className = 'text-xs bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full font-bold'; badgePm.innerText = 'Completado'; }
+                cardPM.classList.add('opacity-60'); if(btnPM) btnPM.disabled = true; if(txtPM) txtPM.innerText = "PM Guardado"; inputsPM.forEach(i => i.disabled = true);
+            } else {
+                const badgePm = document.getElementById('badge-pm'); if (badgePm) { badgePm.className = 'text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded-full font-bold'; badgePm.innerText = 'Planeado'; }
+                cardPM.classList.remove('opacity-60'); if(btnPM) btnPM.disabled = false; if(txtPM) txtPM.innerText = "Marcar sesión PM completada"; inputsPM.forEach(i => i.disabled = false);
+            }
+            lucide.createIcons();
+        }
+
+        function setWeightFilter(days) {
+            activeWeightFilterDays = days;
+            document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+                btn.className = "px-3 py-1 rounded-lg text-gray-400 hover:text-white transition-all";
+            });
+            document.getElementById(`filter-${days}`).className = "px-3 py-1 rounded-lg text-white bg-gray-800 transition-all";
+            renderWeightTrendGraph();
+        }
+
+        function calculateStrictDashboardMetrics() {
+            const realToday = new Date(); 
+            let diasEntrenamientoRealesTotales = 0;
+            let diasEntrenamientoCumplidos = 0;
+            let htmlDots = '';
+            let totalVolumenSemanalAcumulado = 0;
+            let sumaRodilla = 0;
+            let conteoRodilla = 0;
+            let ultimoPesoEncontrado = null;
+
+            mapDaysCode.forEach((dayKey, idx) => {
+                const targetPrefix = getFormattedDateString(realToday, dayKey);
+                const dayRoutine = routinesData[dayKey];
+                
+                const amStat = localStorage.getItem(`${targetPrefix}_am_status`) === 'Completado';
+                const pmStat = localStorage.getItem(`${targetPrefix}_pm_status`) === 'Completado';
+                
+                const tieneCardio = dayRoutine.am.hasCardio;
+                const tieneFuerza = dayRoutine.pm.ex.length > 0;
+                const esDiaDeEntrenamiento = tieneCardio || tieneFuerza;
+
+                if (esDiaDeEntrenamiento) {
+                    diasEntrenamientoRealesTotales++;
+                    let completado = true;
+                    if (tieneCardio && !amStat) completado = false;
+                    if (tieneFuerza && !pmStat) completado = false;
+
+                    if (completado) {
+                        diasEntrenamientoCumplidos++;
+                        htmlDots += `<div class="w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]" title="${dayKey.toUpperCase()}: Entrenado"></div>`;
+                    } else {
+                        htmlDots += `<div class="w-3 h-3 rounded-full bg-gray-800 border border-gray-700" title="${dayKey.toUpperCase()}: Pendiente"></div>`;
+                    }
+                } else {
+                    htmlDots += `<div class="w-3 h-3 rounded-full bg-slate-700/60 border border-slate-800/50" title="${dayKey.toUpperCase()}: Descanso Planificado"></div>`;
+                }
+
+                if (tieneFuerza) {
+                    dayRoutine.pm.ex.forEach((_, eIdx) => {
+                        const guardadoCheck = localStorage.getItem(`${targetPrefix}_pm_ex${eIdx+1}_check`) === 'true';
+                        if (guardadoCheck) {
+                            const pesoGuardado = parseFloat(localStorage.getItem(`${targetPrefix}_pm_ex${eIdx+1}_peso`) || '3');
+                            totalVolumenSemanalAcumulado += (pesoGuardado * 3 * 12); 
+                        }
+                    });
+                }
+
+                const valorRodilla = localStorage.getItem(`${targetPrefix}_am_rodilla`);
+                if (valorRodilla) {
+                    sumaRodilla += parseInt(valorRodilla);
+                    conteoRodilla++;
+                }
+
+                const pesoRegistrado = localStorage.getItem(`${targetPrefix}_metrics_peso`);
+                if (pesoRegistrado) { ultimoPesoEncontrado = parseFloat(pesoRegistrado); }
+            });
+
+            document.getElementById('dash-racha-text').innerText = `${diasEntrenamientoCumplidos} / ${diasEntrenamientoRealesTotales} Días Activos`;
+            document.getElementById('dash-racha-dots').innerHTML = htmlDots;
+            document.getElementById('dash-volumen-text').innerText = `${totalVolumenSemanalAcumulado.toLocaleString('es-CL')} kg`;
+
+            if (ultimoPesoEncontrado) {
+                document.getElementById('dash-peso-text').innerText = `${ultimoPesoEncontrado.toFixed(1)} kg`;
+                document.getElementById('dash-peso-sub').innerText = "Peso detectado en el ciclo";
+                document.getElementById('dash-peso-sub').className = "text-[9px] text-emerald-400 font-medium";
+            } else {
+                document.getElementById('dash-peso-text').innerText = "--.- kg";
+                document.getElementById('dash-peso-sub').innerText = "Sin registros de peso esta semana";
+                document.getElementById('dash-peso-sub').className = "text-[9px] text-amber-500/80 font-medium";
+            }
+
+            if (conteoRodilla > 0) {
+                const promedio = sumaRodilla / conteoRodilla;
+                document.getElementById('dash-rodilla-text').innerText = `${promedio.toFixed(1)} / 5.0`;
+                let glosaSub = "Estado rentable";
+                if(promedio <= 2) { document.getElementById('dash-rodilla-sub').className = "text-[9px] text-emerald-400 font-medium"; glosaSub = "Óptimo impacto"; }
+                else if(promedio <= 3.5) { document.getElementById('dash-rodilla-sub').className = "text-[9px] text-amber-400 font-medium"; glosaSub = "Precaución mod."; }
+                else { document.getElementById('dash-rodilla-sub').className = "text-[9px] text-rose-400 font-medium"; glosaSub = "Sobrecarga crítica"; }
+                document.getElementById('dash-rodilla-sub').innerText = `${glosaSub} (${conteoRodilla} rep.)`;
+            } else {
+                document.getElementById('dash-rodilla-text').innerText = "--.-";
+                document.getElementById('dash-rodilla-sub').innerText = "Requiere ingresos en sesión AM";
+                document.getElementById('dash-rodilla-sub').className = "text-[9px] text-gray-500 font-medium";
+            }
+
+            renderWeightTrendGraph();
+        }
+
+        function renderWeightTrendGraph() {
+            const svg = document.getElementById('dash-weight-svg');
+            const notice = document.getElementById('dash-graph-notice');
+            const totalWidth = svg.clientWidth || 600;
+            const totalHeight = 144; 
+            let historialPesos = [];
+            let hoyIterador = new Date();
+
+            for (let k = activeWeightFilterDays - 1; k >= 0; k--) {
+                const iterDate = new Date(hoyIterador.getFullYear(), hoyIterador.getMonth(), hoyIterador.getDate() - k);
+                const yyyy = iterDate.getFullYear();
+                const mm = String(iterDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(iterDate.getDate()).padStart(2, '0');
+                const checkKey = `${yyyy}-${mm}-${dd}_metrics_peso`;
+                const valor = localStorage.getItem(checkKey);
+                if (valor) { historialPesos.push({ peso: parseFloat(valor), fechaStr: `${dd}/${mm}` }); }
+            }
+
+            if (historialPesos.length < 2) {
+                svg.innerHTML = '';
+                if (notice) notice.classList.remove('hidden');
+                document.getElementById('dash-weight-labels').innerHTML = `<span>--/--</span><span>--/--</span>`;
+                return;
+            }
+
+            if (notice) notice.classList.add('hidden');
+            const listaValores = historialPesos.map(h => h.peso);
+            let maxP = Math.max(...listaValores);
+            let minP = Math.min(...listaValores);
+            if (maxP === minP) { maxP += 1.0; minP -= 1.0; } else { maxP += 0.5; minP -= 0.5; }
+            const rangeY = maxP - minP;
+            let pointsStr = '';
+            let circlesHtml = '';
+
+            historialPesos.forEach((item, index) => {
+                const x = (index / (historialPesos.length - 1)) * (totalWidth - 48) + 24;
+                const y = totalHeight - (((item.peso - minP) / rangeY) * (totalHeight - 40) + 20);
+                pointsStr += `${x},${y} `;
+                circlesHtml += `
+                    <g class="group cursor-pointer">
+                        <circle cx="${x}" cy="${y}" r="4" class="fill-cyan-400 stroke-[#0b0f19] stroke-2 hover:r-6 transition-all" />
+                        <text x="${x}" y="${y - 8}" text-anchor="middle" class="fill-white text-[9px] font-black bg-[#111827] hidden group-hover:block">${item.peso.toFixed(1)}</text>
+                    </g>
+                `;
+            });
+
+            svg.innerHTML = `
+                <g class="opacity-10"><line x1="0" y1="${totalHeight/2}" x2="${totalWidth}" y2="${totalHeight/2}" class="stroke-gray-600 stroke-dasharray-[4]" /></g>
+                <polyline points="${pointsStr}" fill="none" class="stroke-cyan-500 stroke-[2.5]" stroke-linecap="round" stroke-linejoin="round"/>
+                ${circlesHtml}
+            `;
+
+            document.getElementById('dash-weight-labels').innerHTML = `
+                <span>${historialPesos[0].fechaStr} (${historialPesos[0].peso.toFixed(1)} kg)</span>
+                <span>${historialPesos[historialPesos.length - 1].fechaStr} (${historialPesos[historialPesos.length - 1].peso.toFixed(1)} kg)</span>
+            `;
+        }
+
+        function processAIInput() {
+            const rawText = document.getElementById('ai-text-input').value;
+            if(!rawText.trim()) { alert('Por favor pega texto válido de rutina.'); return; }
+            alert('Procesamiento simulado en entorno local.');
+        }
+
+        const initDate = new Date();
+        const jsDayNum = initDate.getDay();
+        currentDay = mapDaysCode[jsDayNum === 0 ? 6 : jsDayNum - 1];
+        referenceDate = initDate;
+
+        syncCalendarPickerInput();
+        renderDaySelector();
+        renderActiveDay();
+        loadSavedData();
+        switchTab('dash');
+
+        function clearLocalStorage() { if(confirm('¿Borrar todos los datos históricos locales?')) { localStorage.clear(); location.reload(); } }
+    </script>
+</body>
+</html>
