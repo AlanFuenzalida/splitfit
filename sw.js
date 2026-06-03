@@ -1,4 +1,4 @@
-const CACHE_NAME = 'splitfit-v1';
+const CACHE_NAME = 'splitfit-cache-v3.9.6';
 const ASSETS = [
   './',
   './index.html',
